@@ -4,7 +4,6 @@ import (
 	"Fix-Go-Fiber-Backend/internal/domain/dto"
 	"Fix-Go-Fiber-Backend/internal/domain/entity"
 	"Fix-Go-Fiber-Backend/internal/domain/service"
-	"Fix-Go-Fiber-Backend/pkg/jwt"
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
@@ -43,15 +42,19 @@ func (h *PekerjaanAlumniHandler) CreatePekerjaan(c *fiber.Ctx) error {
 	}
 
 	// Get user claims from JWT
-	claims := c.Locals("user").(*jwt.Claims)
+	claims := c.Locals("user").(*service.JWTClaims)
 	
-	// If user is alumni, they can only create pekerjaan for themselves
-	if claims.Role == "alumni" {
-		if req.AlumniID != claims.UserID {
+	// If user is mahasiswa/alumni, they can only create pekerjaan for themselves
+	if claims.Role == "mahasiswa" {
+		if req.MahasiswaID != nil && *req.MahasiswaID != claims.UserID {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"success": false,
 				"message": "Access denied: You can only create pekerjaan for yourself",
 			})
+		}
+		// If MahasiswaID is nil and NIM is provided, we need to validate the NIM belongs to this user
+		if req.MahasiswaID == nil && req.NIM != "" {
+			// This will be validated in the usecase layer
 		}
 	}
 
@@ -117,23 +120,23 @@ func (h *PekerjaanAlumniHandler) GetAllPekerjaan(c *fiber.Ctx) error {
 	})
 }
 
-// GetPekerjaanByAlumniID - Alumni for self, Admin for any
-func (h *PekerjaanAlumniHandler) GetPekerjaanByAlumniID(c *fiber.Ctx) error {
-	alumniIDStr := c.Params("alumni_id")
-	alumniID, err := strconv.ParseUint(alumniIDStr, 10, 32)
+// GetPekerjaanByMahasiswaID - Mahasiswa/Alumni for self, Admin for any
+func (h *PekerjaanAlumniHandler) GetPekerjaanByMahasiswaID(c *fiber.Ctx) error {
+	mahasiswaIDStr := c.Params("mahasiswa_id")
+	mahasiswaID, err := strconv.ParseUint(mahasiswaIDStr, 10, 32)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
-			"message": "Invalid alumni ID",
+			"message": "Invalid mahasiswa ID",
 		})
 	}
 
 	// Get user claims from JWT
-	claims := c.Locals("user").(*jwt.Claims)
+	claims := c.Locals("user").(*service.JWTClaims)
 	
-	// If user is alumni, check if they can only access their own pekerjaan
-	if claims.Role == "alumni" {
-		if claims.UserID != uint(alumniID) {
+	// If user is mahasiswa, check if they can only access their own pekerjaan
+	if claims.Role == "mahasiswa" {
+		if claims.UserID != uint(mahasiswaID) {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"success": false,
 				"message": "Access denied: You can only view your own pekerjaan",
@@ -141,7 +144,7 @@ func (h *PekerjaanAlumniHandler) GetPekerjaanByAlumniID(c *fiber.Ctx) error {
 		}
 	}
 
-	pekerjaan, err := h.pekerjaanService.GetPekerjaanByAlumniID(c.Context(), uint(alumniID))
+	pekerjaan, err := h.pekerjaanService.GetPekerjaanByMahasiswaID(c.Context(), uint(mahasiswaID))
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
@@ -183,11 +186,11 @@ func (h *PekerjaanAlumniHandler) GetPekerjaanByID(c *fiber.Ctx) error {
 	}
 
 	// Get user claims from JWT
-	claims := c.Locals("user").(*jwt.Claims)
+	claims := c.Locals("user").(*service.JWTClaims)
 	
 	// If user is alumni, check if they can only access their own pekerjaan
 	if claims.Role == "alumni" {
-		if claims.UserID != pekerjaan.AlumniID {
+		if claims.UserID != pekerjaan.MahasiswaID {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"success": false,
 				"message": "Access denied: You can only view your own pekerjaan",
@@ -241,11 +244,11 @@ func (h *PekerjaanAlumniHandler) UpdatePekerjaan(c *fiber.Ctx) error {
 	}
 
 	// Get user claims from JWT
-	claims := c.Locals("user").(*jwt.Claims)
+	claims := c.Locals("user").(*service.JWTClaims)
 	
 	// If user is alumni, check if they can only update their own pekerjaan
 	if claims.Role == "alumni" {
-		if claims.UserID != existingPekerjaan.AlumniID {
+		if claims.UserID != existingPekerjaan.MahasiswaID {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"success": false,
 				"message": "Access denied: You can only update your own pekerjaan",
@@ -291,11 +294,11 @@ func (h *PekerjaanAlumniHandler) DeletePekerjaan(c *fiber.Ctx) error {
 	}
 
 	// Get user claims from JWT
-	claims := c.Locals("user").(*jwt.Claims)
+	claims := c.Locals("user").(*service.JWTClaims)
 	
 	// If user is alumni, check if they can only delete their own pekerjaan
 	if claims.Role == "alumni" {
-		if claims.UserID != existingPekerjaan.AlumniID {
+		if claims.UserID != existingPekerjaan.MahasiswaID {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"success": false,
 				"message": "Access denied: You can only delete your own pekerjaan",

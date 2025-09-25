@@ -13,7 +13,7 @@ func SetupAuthRoutes(app fiber.Router, authHandler *handler.AuthHandler, jwtUtil
 
 	// Public auth routes - Registration
 	auth.Post("/mahasiswa/register", authHandler.RegisterMahasiswa)
-	auth.Post("/alumni/register", authHandler.RegisterAlumni)
+	auth.Post("/mahasiswa/graduate", authHandler.GraduateMahasiswa)
 
 	// Public auth routes - Login
 	auth.Post("/mahasiswa/login", authHandler.LoginMahasiswa)

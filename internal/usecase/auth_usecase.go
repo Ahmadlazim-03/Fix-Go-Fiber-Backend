@@ -15,7 +15,6 @@ import (
 
 type authService struct {
 	mahasiswaRepo repository.MahasiswaRepository
-	alumniRepo    repository.AlumniRepository
 	adminRepo     repository.AdminUserRepository
 	jwtUtil       *jwt.JWTUtil
 	bcryptUtil    *bcrypt.BcryptUtil
@@ -23,14 +22,12 @@ type authService struct {
 
 func NewAuthService(
 	mahasiswaRepo repository.MahasiswaRepository,
-	alumniRepo repository.AlumniRepository,
 	adminRepo repository.AdminUserRepository,
 	jwtUtil *jwt.JWTUtil,
 	bcryptUtil *bcrypt.BcryptUtil,
 ) service.AuthService {
 	return &authService{
 		mahasiswaRepo: mahasiswaRepo,
-		alumniRepo:    alumniRepo,
 		adminRepo:     adminRepo,
 		jwtUtil:       jwtUtil,
 		bcryptUtil:    bcryptUtil,
@@ -74,10 +71,15 @@ func (s *authService) LoginMahasiswa(req *dto.MahasiswaLoginRequest) (*dto.Login
 func (s *authService) LoginAlumni(req *dto.AlumniLoginRequest) (*dto.LoginResponse, error) {
 	ctx := context.Background()
 	
-	// Find alumni by email through mahasiswa relation
+	// Find mahasiswa by email
 	mahasiswa, err := s.mahasiswaRepo.GetByEmail(ctx, req.Email)
 	if err != nil || mahasiswa == nil {
 		return nil, errors.New("invalid credentials")
+	}
+
+	// Check if mahasiswa has graduated (is alumni)
+	if !mahasiswa.IsAlumni() {
+		return nil, errors.New("account is not an alumni account")
 	}
 
 	// Verify password
@@ -85,15 +87,9 @@ func (s *authService) LoginAlumni(req *dto.AlumniLoginRequest) (*dto.LoginRespon
 		return nil, errors.New("invalid credentials")
 	}
 
-	// Find alumni record by mahasiswa_id
-	alumni, err := s.alumniRepo.GetByMahasiswaID(ctx, mahasiswa.ID)
-	if err != nil {
-		return nil, errors.New("alumni record not found")
-	}
-
 	// Generate JWT token
 	claims := &service.JWTClaims{
-		UserID: alumni.ID,
+		UserID: mahasiswa.ID,
 		Email:  mahasiswa.Email,
 		Role:   "alumni",
 	}
@@ -105,7 +101,7 @@ func (s *authService) LoginAlumni(req *dto.AlumniLoginRequest) (*dto.LoginRespon
 
 	return &dto.LoginResponse{
 		Token:     token,
-		User:      alumni.ToResponse(),
+		User:      mahasiswa.ToResponse(),
 		Role:      "alumni",
 		ExpiresAt: expiresAt.Unix(),
 	}, nil
@@ -154,41 +150,32 @@ func (s *authService) RegisterMahasiswa(req *dto.RegisterMahasiswaRequest) (*dto
 	}, nil
 }
 
-// RegisterAlumni creates a new alumni account
-func (s *authService) RegisterAlumni(req *dto.RegisterAlumniRequest) (*dto.RegisterResponse, error) {
+// GraduateMahasiswa marks a mahasiswa as graduated (alumni)
+func (s *authService) GraduateMahasiswa(req *dto.GraduateMahasiswaRequest) (*dto.RegisterResponse, error) {
 	ctx := context.Background()
 	
-	// First check if a mahasiswa with this NIM exists
-	mahasiswa, err := s.mahasiswaRepo.GetByNIM(ctx, req.NIM)
+	// Find mahasiswa by ID
+	mahasiswa, err := s.mahasiswaRepo.GetByID(ctx, req.MahasiswaID)
 	if err != nil || mahasiswa == nil {
-		return nil, errors.New("mahasiswa with this NIM not found. Please register as mahasiswa first")
+		return nil, errors.New("mahasiswa not found")
 	}
 	
-	// Check if this mahasiswa is already registered as alumni
-	existingAlumni, _ := s.alumniRepo.GetByMahasiswaID(ctx, mahasiswa.ID)
-	if existingAlumni != nil {
-		return nil, errors.New("alumni with this NIM already exists")
+	// Check if already graduated
+	if mahasiswa.IsAlumni() {
+		return nil, errors.New("mahasiswa is already graduated")
 	}
 	
-	// Verify if the provided details match the mahasiswa record
-	if mahasiswa.Nama != req.Nama || mahasiswa.Email != req.Email || mahasiswa.Jurusan != req.Jurusan {
-		return nil, errors.New("provided details do not match mahasiswa record")
-	}
+	// Graduate the mahasiswa
+	mahasiswa.Graduate(req.TahunLulus, req.NoTelepon, req.AlamatAlumni)
 	
-	// Create alumni entity
-	alumni := &entity.Alumni{
-		MahasiswaID: mahasiswa.ID,
-		TahunLulus:  req.TahunLulus,
-	}
-	
-	// Save to database
-	if err := s.alumniRepo.Create(ctx, alumni); err != nil {
-		return nil, fmt.Errorf("failed to create alumni: %w", err)
+	// Update in database
+	if err := s.mahasiswaRepo.Update(ctx, req.MahasiswaID, mahasiswa); err != nil {
+		return nil, fmt.Errorf("failed to graduate mahasiswa: %w", err)
 	}
 	
 	return &dto.RegisterResponse{
-		ID:      int64(alumni.ID),
-		Message: "Alumni registered successfully",
+		ID:      int64(mahasiswa.ID),
+		Message: "Mahasiswa graduated successfully",
 	}, nil
 }
 

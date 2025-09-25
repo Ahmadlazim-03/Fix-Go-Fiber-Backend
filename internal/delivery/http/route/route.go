@@ -16,7 +16,6 @@ func SetupRoutes(
 	cfg *config.Config,
 	authHandler *handler.AuthHandler,
 	mahasiswaHandler *handler.MahasiswaHandler,
-	alumniHandler *handler.AlumniHandler,
 	pekerjaanHandler *handler.PekerjaanAlumniHandler,
 	jwtUtil *jwt.JWTUtil,
 ) {
@@ -41,6 +40,5 @@ func SetupRoutes(
 	
 	// Protected routes
 	SetupMahasiswaRoutes(api, mahasiswaHandler, jwtUtil)
-	SetupAlumniRoutes(api, alumniHandler, jwtUtil)
 	SetupPekerjaanAlumniRoutes(api, pekerjaanHandler, jwtUtil)
 }

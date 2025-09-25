@@ -5,7 +5,7 @@ import (
 
 	"Fix-Go-Fiber-Backend/internal/delivery/http/handler"
 	"Fix-Go-Fiber-Backend/internal/delivery/http/route"
-	"Fix-Go-Fiber-Backend/internal/repository/postgres"
+	"Fix-Go-Fiber-Backend/internal/repository"
 	"Fix-Go-Fiber-Backend/internal/usecase"
 	"Fix-Go-Fiber-Backend/pkg/bcrypt"
 	"Fix-Go-Fiber-Backend/pkg/config"
@@ -47,20 +47,17 @@ func main() {
 	standardValidator := customValidator.GetValidator() // Get standard validator for mahasiswa handler
 
 	// Initialize repositories
-	mahasiswaRepo := postgres.NewMahasiswaRepository(db)
-	alumniRepo := postgres.NewAlumniRepository(db)
-	adminRepo := postgres.NewAdminUserRepository(db)
-	pekerjaanAlumniRepo := postgres.NewPekerjaanAlumniRepository(db)
+	mahasiswaRepo := repository.NewMahasiswaRepository(db)
+	adminRepo := repository.NewAdminUserRepository(db)
+	pekerjaanAlumniRepo := repository.NewPekerjaanAlumniRepository(db)
 
 	// Initialize use cases
 	mahasiswaUsecase := usecase.NewMahasiswaUsecase(mahasiswaRepo, bcryptHelper)
-	alumniUsecase := usecase.NewAlumniUsecase(alumniRepo, mahasiswaRepo)
-	pekerjaanUsecase := usecase.NewPekerjaanAlumniUsecase(pekerjaanAlumniRepo, alumniRepo)
-	authService := usecase.NewAuthService(mahasiswaRepo, alumniRepo, adminRepo, jwtUtil, bcryptUtil)
+	pekerjaanUsecase := usecase.NewPekerjaanAlumniUsecase(pekerjaanAlumniRepo, mahasiswaRepo)
+	authService := usecase.NewAuthService(mahasiswaRepo, adminRepo, jwtUtil, bcryptUtil)
 
 	// Initialize handlers
 	mahasiswaHandler := handler.NewMahasiswaHandler(mahasiswaUsecase, standardValidator)
-	alumniHandler := handler.NewAlumniHandler(alumniUsecase, standardValidator)
 	pekerjaanHandler := handler.NewPekerjaanAlumniHandler(pekerjaanUsecase, standardValidator)
 	authHandler := handler.NewAuthHandler(authService, customValidator)
 
@@ -81,7 +78,7 @@ func main() {
 	})
 
 	// Setup routes
-	route.SetupRoutes(app, cfg, authHandler, mahasiswaHandler, alumniHandler, pekerjaanHandler, jwtUtil)
+	route.SetupRoutes(app, cfg, authHandler, mahasiswaHandler, pekerjaanHandler, jwtUtil)
 
 	// Start server
 	address := ":" + cfg.App.Port

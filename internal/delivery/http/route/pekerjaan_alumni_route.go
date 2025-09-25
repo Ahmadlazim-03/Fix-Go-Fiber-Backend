@@ -25,6 +25,6 @@ func SetupPekerjaanAlumniRoutes(
 	pekerjaan.Put("/:id", middleware.RequireAuth(jwtUtil), middleware.AlumniOrAdmin(jwtUtil), pekerjaanHandler.UpdatePekerjaan)
 	pekerjaan.Delete("/:id", middleware.RequireAuth(jwtUtil), middleware.AlumniOrAdmin(jwtUtil), pekerjaanHandler.DeletePekerjaan)
 	
-	// Get pekerjaan by alumni ID - Alumni can get their own, Admin can get any
-	pekerjaan.Get("/alumni/:alumni_id", middleware.RequireAuth(jwtUtil), middleware.AlumniOrAdmin(jwtUtil), pekerjaanHandler.GetPekerjaanByAlumniID)
+	// Get pekerjaan by mahasiswa ID - Mahasiswa/Alumni can get their own, Admin can get any
+	pekerjaan.Get("/mahasiswa/:mahasiswa_id", middleware.RequireAuth(jwtUtil), middleware.AlumniOrAdmin(jwtUtil), pekerjaanHandler.GetPekerjaanByMahasiswaID)
 }

@@ -15,7 +15,7 @@ const (
 
 type PekerjaanAlumni struct {
 	ID           uint            `json:"id" gorm:"primaryKey"`
-	AlumniID     uint            `json:"alumni_id" gorm:"not null"`
+	MahasiswaID  uint            `json:"mahasiswa_id" gorm:"not null"` // Reference to Mahasiswa (who is alumni)
 	NamaCompany  string          `json:"nama_company" gorm:"not null;size:100"`
 	Posisi       string          `json:"posisi" gorm:"not null;size:100"`
 	TanggalMulai time.Time       `json:"tanggal_mulai" gorm:"not null"`
@@ -27,12 +27,12 @@ type PekerjaanAlumni struct {
 	DeletedAt    gorm.DeletedAt  `json:"deleted_at" gorm:"index"`
 	
 	// Relations
-	Alumni Alumni `json:"alumni,omitempty" gorm:"foreignKey:AlumniID"`
+	Mahasiswa Mahasiswa `json:"mahasiswa,omitempty" gorm:"foreignKey:MahasiswaID"`
 }
 
 type PekerjaanAlumniResponse struct {
 	ID             uint               `json:"id"`
-	AlumniID       uint               `json:"alumni_id"`
+	MahasiswaID    uint               `json:"mahasiswa_id"`
 	NamaCompany    string             `json:"nama_company"`
 	Posisi         string             `json:"posisi"`
 	TanggalMulai   time.Time          `json:"tanggal_mulai"`
@@ -41,13 +41,13 @@ type PekerjaanAlumniResponse struct {
 	Deskripsi      string             `json:"deskripsi"`
 	CreatedAt      time.Time          `json:"created_at"`
 	UpdatedAt      time.Time          `json:"updated_at"`
-	Alumni         *AlumniResponse    `json:"alumni,omitempty"`
+	Mahasiswa      *MahasiswaResponse `json:"mahasiswa,omitempty"`
 }
 
 func (p *PekerjaanAlumni) ToResponse() *PekerjaanAlumniResponse {
 	response := &PekerjaanAlumniResponse{
 		ID:             p.ID,
-		AlumniID:       p.AlumniID,
+		MahasiswaID:    p.MahasiswaID,
 		NamaCompany:    p.NamaCompany,
 		Posisi:         p.Posisi,
 		TanggalMulai:   p.TanggalMulai,
@@ -58,8 +58,8 @@ func (p *PekerjaanAlumni) ToResponse() *PekerjaanAlumniResponse {
 		UpdatedAt:      p.UpdatedAt,
 	}
 	
-	if p.Alumni.ID != 0 {
-		response.Alumni = p.Alumni.ToResponse()
+	if p.Mahasiswa.ID != 0 {
+		response.Mahasiswa = p.Mahasiswa.ToResponse()
 	}
 	
 	return response

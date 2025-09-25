@@ -1,4 +1,4 @@
-package postgres
+package repository
 
 import (
 	"context"
@@ -31,19 +31,25 @@ func (r *mahasiswaRepository) Create(ctx context.Context, mahasiswa *entity.Maha
 	}
 
 	query := `INSERT INTO mahasiswas (nim, nama, jurusan, angkatan, email, password, created_at, updated_at) 
-			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
+			  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 	
 	now := time.Now()
-	err = sqlDB.QueryRowContext(ctx, query,
+	result, err := sqlDB.ExecContext(ctx, query,
 		mahasiswa.NIM, mahasiswa.Nama, mahasiswa.Jurusan,
 		mahasiswa.Angkatan, mahasiswa.Email, mahasiswa.Password,
 		now, now,
-	).Scan(&mahasiswa.ID)
+	)
 
 	if err != nil {
 		return fmt.Errorf("failed to create mahasiswa: %w", err)
 	}
 	
+	id, err := result.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("failed to get last insert ID: %w", err)
+	}
+	
+	mahasiswa.ID = uint(id)
 	mahasiswa.CreatedAt = now
 	mahasiswa.UpdatedAt = now
 	return nil
@@ -56,7 +62,7 @@ func (r *mahasiswaRepository) GetByID(ctx context.Context, id uint) (*entity.Mah
 	}
 
 	query := `SELECT id, nim, nama, jurusan, angkatan, email, password, created_at, updated_at 
-			  FROM mahasiswas WHERE id = $1 AND deleted_at IS NULL`
+			  FROM mahasiswas WHERE id = ? AND deleted_at IS NULL`
 	
 	var mahasiswa entity.Mahasiswa
 	err = sqlDB.QueryRowContext(ctx, query, id).Scan(
@@ -82,7 +88,7 @@ func (r *mahasiswaRepository) GetByNIM(ctx context.Context, nim string) (*entity
 	}
 
 	query := `SELECT id, nim, nama, jurusan, angkatan, email, password, created_at, updated_at 
-			  FROM mahasiswas WHERE nim = $1 AND deleted_at IS NULL`
+			  FROM mahasiswas WHERE nim = ? AND deleted_at IS NULL`
 	
 	var mahasiswa entity.Mahasiswa
 	err = sqlDB.QueryRowContext(ctx, query, nim).Scan(
@@ -108,7 +114,7 @@ func (r *mahasiswaRepository) GetByEmail(ctx context.Context, email string) (*en
 	}
 
 	query := `SELECT id, nim, nama, jurusan, angkatan, email, password, created_at, updated_at 
-			  FROM mahasiswas WHERE email = $1 AND deleted_at IS NULL`
+			  FROM mahasiswas WHERE email = ? AND deleted_at IS NULL`
 	
 	var mahasiswa entity.Mahasiswa
 	err = sqlDB.QueryRowContext(ctx, query, email).Scan(
@@ -149,7 +155,7 @@ func (r *mahasiswaRepository) GetAll(ctx context.Context, limit, offset int) ([]
 	// Get data with pagination
 	query := `SELECT id, nim, nama, jurusan, angkatan, email, password, created_at, updated_at 
 			  FROM mahasiswas WHERE deleted_at IS NULL 
-			  ORDER BY created_at DESC LIMIT $1 OFFSET $2`
+			  ORDER BY created_at DESC LIMIT ? OFFSET ?`
 	
 	rows, err := sqlDB.QueryContext(ctx, query, limit, offset)
 	if err != nil {
@@ -186,37 +192,30 @@ func (r *mahasiswaRepository) Update(ctx context.Context, id uint, mahasiswa *en
 
 	setParts := []string{}
 	args := []interface{}{}
-	argIndex := 1
 
 	if mahasiswa.NIM != "" {
-		setParts = append(setParts, fmt.Sprintf("nim = $%d", argIndex))
+		setParts = append(setParts, "nim = ?")
 		args = append(args, mahasiswa.NIM)
-		argIndex++
 	}
 	if mahasiswa.Nama != "" {
-		setParts = append(setParts, fmt.Sprintf("nama = $%d", argIndex))
+		setParts = append(setParts, "nama = ?")
 		args = append(args, mahasiswa.Nama)
-		argIndex++
 	}
 	if mahasiswa.Jurusan != "" {
-		setParts = append(setParts, fmt.Sprintf("jurusan = $%d", argIndex))
+		setParts = append(setParts, "jurusan = ?")
 		args = append(args, mahasiswa.Jurusan)
-		argIndex++
 	}
 	if mahasiswa.Angkatan > 0 {
-		setParts = append(setParts, fmt.Sprintf("angkatan = $%d", argIndex))
+		setParts = append(setParts, "angkatan = ?")
 		args = append(args, mahasiswa.Angkatan)
-		argIndex++
 	}
 	if mahasiswa.Email != "" {
-		setParts = append(setParts, fmt.Sprintf("email = $%d", argIndex))
+		setParts = append(setParts, "email = ?")
 		args = append(args, mahasiswa.Email)
-		argIndex++
 	}
 	if mahasiswa.Password != "" {
-		setParts = append(setParts, fmt.Sprintf("password = $%d", argIndex))
+		setParts = append(setParts, "password = ?")
 		args = append(args, mahasiswa.Password)
-		argIndex++
 	}
 
 	if len(setParts) == 0 {
@@ -224,15 +223,14 @@ func (r *mahasiswaRepository) Update(ctx context.Context, id uint, mahasiswa *en
 	}
 
 	// Add updated_at
-	setParts = append(setParts, fmt.Sprintf("updated_at = $%d", argIndex))
+	setParts = append(setParts, "updated_at = ?")
 	args = append(args, time.Now())
-	argIndex++
 
 	// Add WHERE condition
 	args = append(args, id)
 
-	query := fmt.Sprintf("UPDATE mahasiswas SET %s WHERE id = $%d AND deleted_at IS NULL", 
-		strings.Join(setParts, ", "), argIndex)
+	query := fmt.Sprintf("UPDATE mahasiswas SET %s WHERE id = ? AND deleted_at IS NULL", 
+		strings.Join(setParts, ", "))
 
 	result, err := sqlDB.ExecContext(ctx, query, args...)
 	if err != nil {
@@ -257,7 +255,7 @@ func (r *mahasiswaRepository) Delete(ctx context.Context, id uint) error {
 		return err
 	}
 
-	query := `UPDATE mahasiswas SET deleted_at = $1 WHERE id = $2 AND deleted_at IS NULL`
+	query := `UPDATE mahasiswas SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL`
 	
 	result, err := sqlDB.ExecContext(ctx, query, time.Now(), id)
 	if err != nil {
@@ -287,11 +285,11 @@ func (r *mahasiswaRepository) Search(ctx context.Context, query string, limit, o
 	// Count total
 	countSQL := `SELECT COUNT(*) FROM mahasiswas 
 				 WHERE deleted_at IS NULL AND (
-					 LOWER(nim) LIKE $1 OR LOWER(nama) LIKE $1 OR 
-					 LOWER(jurusan) LIKE $1 OR LOWER(email) LIKE $1
+					 LOWER(nim) LIKE ? OR LOWER(nama) LIKE ? OR 
+					 LOWER(jurusan) LIKE ? OR LOWER(email) LIKE ?
 				 )`
 	var total int64
-	err = sqlDB.QueryRowContext(ctx, countSQL, searchQuery).Scan(&total)
+	err = sqlDB.QueryRowContext(ctx, countSQL, searchQuery, searchQuery, searchQuery, searchQuery).Scan(&total)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to count search results: %w", err)
 	}
@@ -300,12 +298,12 @@ func (r *mahasiswaRepository) Search(ctx context.Context, query string, limit, o
 	dataSQL := `SELECT id, nim, nama, jurusan, angkatan, email, password, created_at, updated_at 
 				FROM mahasiswas 
 				WHERE deleted_at IS NULL AND (
-					LOWER(nim) LIKE $1 OR LOWER(nama) LIKE $1 OR 
-					LOWER(jurusan) LIKE $1 OR LOWER(email) LIKE $1
+					LOWER(nim) LIKE ? OR LOWER(nama) LIKE ? OR 
+					LOWER(jurusan) LIKE ? OR LOWER(email) LIKE ?
 				)
-				ORDER BY created_at DESC LIMIT $2 OFFSET $3`
+				ORDER BY created_at DESC LIMIT ? OFFSET ?`
 	
-	rows, err := sqlDB.QueryContext(ctx, dataSQL, searchQuery, limit, offset)
+	rows, err := sqlDB.QueryContext(ctx, dataSQL, searchQuery, searchQuery, searchQuery, searchQuery, limit, offset)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to search mahasiswa: %w", err)
 	}

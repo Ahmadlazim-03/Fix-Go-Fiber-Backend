@@ -78,9 +78,9 @@ func (h *AuthHandler) RegisterMahasiswa(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(utils.SuccessResponse("Registration successful", response))
 }
 
-// RegisterAlumni handles alumni registration
-func (h *AuthHandler) RegisterAlumni(c *fiber.Ctx) error {
-	var req dto.RegisterAlumniRequest
+// GraduateMahasiswa handles marking mahasiswa as graduated (alumni)
+func (h *AuthHandler) GraduateMahasiswa(c *fiber.Ctx) error {
+	var req dto.GraduateMahasiswaRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse("Invalid request body"))
 	}
@@ -89,12 +89,12 @@ func (h *AuthHandler) RegisterAlumni(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(utils.ValidationErrorResponse(err))
 	}
 
-	response, err := h.authService.RegisterAlumni(&req)
+	response, err := h.authService.GraduateMahasiswa(&req)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(utils.ErrorResponse(err.Error()))
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(utils.SuccessResponse("Registration successful", response))
+	return c.Status(fiber.StatusOK).JSON(utils.SuccessResponse("Graduation successful", response))
 }
 
 // LoginAdmin handles admin login

@@ -163,12 +163,9 @@ func (h *MahasiswaHandler) Update(c *fiber.Ctx) error {
 	}
 
 	mahasiswa := &entity.Mahasiswa{
-		NIM:      req.NIM,
-		Nama:     req.Nama,
-		Jurusan:  req.Jurusan,
-		Angkatan: req.Angkatan,
-		Email:    req.Email,
-		Password: req.Password,
+		Nama:      req.Nama,
+		Email:     req.Email,
+		NoTelepon: req.NoTelepon,
 	}
 
 	if err := h.mahasiswaUsecase.Update(c.Context(), uint(id), mahasiswa); err != nil {

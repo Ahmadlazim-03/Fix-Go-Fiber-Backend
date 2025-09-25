@@ -244,8 +244,8 @@ func createDefaultAdmin(sqlDB *sql.DB, driver string) error {
 	}
 
 	// Create default admin (password: admin123)
-	// Hash: $2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPfxr9t4GJWy.
-	hashedPassword := "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPfxr9t4GJWy."
+	// Hash: $2a$12$DID7pK1MQljp0G3VQ1xUiekK1SXX1G04bYJy.bEN1zA6MxVaZ7eYC
+	hashedPassword := "$2a$12$DID7pK1MQljp0G3VQ1xUiekK1SXX1G04bYJy.bEN1zA6MxVaZ7eYC"
 	
 	switch driver {
 	case "postgres":

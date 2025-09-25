@@ -23,7 +23,7 @@ type AuthService interface {
 	
 	// Register methods
 	RegisterMahasiswa(req *dto.RegisterMahasiswaRequest) (*dto.RegisterResponse, error)
-	RegisterAlumni(req *dto.RegisterAlumniRequest) (*dto.RegisterResponse, error)
+	GraduateMahasiswa(req *dto.GraduateMahasiswaRequest) (*dto.RegisterResponse, error)
 	
 	// Token validation
 	ValidateToken(token string) (*JWTClaims, error)
@@ -38,7 +38,7 @@ type AuthService interface {
 type EmailService interface {
 	SendWelcomeEmail(ctx context.Context, email, name string) error
 	SendPasswordResetEmail(ctx context.Context, email, resetToken string) error
-	SendAlumniRegistrationNotification(ctx context.Context, alumni *entity.Alumni) error
+	SendGraduationNotification(ctx context.Context, mahasiswa *entity.Mahasiswa) error
 }
 
 // NotificationService interface untuk notification domain services

@@ -1,4 +1,4 @@
-package postgres
+package repository
 
 import (
 	"context"
@@ -29,18 +29,24 @@ func (r *adminUserRepository) Create(ctx context.Context, admin *entity.AdminUse
 	}
 
 	query := `INSERT INTO admin_users (username, email, password, role, is_active, created_at, updated_at) 
-			  VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id`
+			  VALUES (?, ?, ?, ?, ?, ?, ?)`
 	
 	now := time.Now()
-	err = sqlDB.QueryRowContext(ctx, query,
+	result, err := sqlDB.ExecContext(ctx, query,
 		admin.Username, admin.Email, admin.Password, admin.Role,
 		admin.IsActive, now, now,
-	).Scan(&admin.ID)
+	)
 
 	if err != nil {
 		return fmt.Errorf("failed to create admin user: %w", err)
 	}
 	
+	id, err := result.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("failed to get last insert ID: %w", err)
+	}
+	
+	admin.ID = uint(id)
 	admin.CreatedAt = now
 	admin.UpdatedAt = now
 	return nil
