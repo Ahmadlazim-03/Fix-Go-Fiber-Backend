@@ -1,0 +1,659 @@
+{
+	"info": {
+		"_postman_id": "fix-go-fiber-backend-api",
+		"name": "Fix Go Fiber Backend API",
+		"description": "API Collection for Role-Based Authentication System with Mahasiswa, Alumni, and Pekerjaan management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register Mahasiswa",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nim\": \"123456789\",\n    \"nama\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"password\": \"password123\",\n    \"jurusan\": \"Teknik Informatika\",\n    \"angkatan\": 2020\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/mahasiswa/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"mahasiswa",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register Alumni",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nim\": \"123456789\",\n    \"nama\": \"Jane Smith\",\n    \"email\": \"jane@example.com\",\n    \"password\": \"password123\",\n    \"jurusan\": \"Teknik Informatika\",\n    \"tahun_lulus\": 2022\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/alumni/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"alumni",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.success && response.data.token) {",
+									"        pm.environment.set('admin_token', response.data.token);",
+									"        pm.environment.set('admin_user_id', response.data.user.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/admin/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login Mahasiswa",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.success && response.data.token) {",
+									"        pm.environment.set('mahasiswa_token', response.data.token);",
+									"        pm.environment.set('mahasiswa_user_id', response.data.user.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nim\": \"123456789\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/mahasiswa/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"mahasiswa",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login Alumni",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.success && response.data.token) {",
+									"        pm.environment.set('alumni_token', response.data.token);",
+									"        pm.environment.set('alumni_user_id', response.data.user.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nim\": \"123456789\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/alumni/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"alumni",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/profile",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Mahasiswa Management",
+			"item": [
+				{
+					"name": "Get All Mahasiswa (Admin Only)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/mahasiswa",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"mahasiswa"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Mahasiswa by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/mahasiswa/{{mahasiswa_user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"mahasiswa",
+								"{{mahasiswa_user_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Mahasiswa (Admin Only)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nim\": \"987654321\",\n    \"nama\": \"Alice Johnson\",\n    \"email\": \"alice@example.com\",\n    \"password\": \"password123\",\n    \"jurusan\": \"Sistem Informasi\",\n    \"angkatan\": 2021\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/mahasiswa",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"mahasiswa"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Mahasiswa",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nama\": \"Alice Johnson Updated\",\n    \"email\": \"alice.updated@example.com\",\n    \"jurusan\": \"Sistem Informasi\",\n    \"angkatan\": 2021\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/mahasiswa/{{mahasiswa_user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"mahasiswa",
+								"{{mahasiswa_user_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Mahasiswa (Admin Only)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/mahasiswa/{{mahasiswa_user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"mahasiswa",
+								"{{mahasiswa_user_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Alumni Management",
+			"item": [
+				{
+					"name": "Get All Alumni (Admin Only)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/alumni",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"alumni"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Alumni by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{alumni_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/alumni/{{alumni_user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"alumni",
+								"{{alumni_user_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Alumni (Admin Only)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nim\": \"987654321\",\n    \"nama\": \"Bob Wilson\",\n    \"email\": \"bob@example.com\",\n    \"password\": \"password123\",\n    \"jurusan\": \"Teknik Informatika\",\n    \"tahun_lulus\": 2023\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/alumni",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"alumni"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Alumni",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{alumni_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nama\": \"Bob Wilson Updated\",\n    \"email\": \"bob.updated@example.com\",\n    \"jurusan\": \"Teknik Informatika\",\n    \"tahun_lulus\": 2023\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/alumni/{{alumni_user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"alumni",
+								"{{alumni_user_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Alumni (Admin Only)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/alumni/{{alumni_user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"alumni",
+								"{{alumni_user_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Pekerjaan Management",
+			"item": [
+				{
+					"name": "Get All Pekerjaan (Admin Only)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/pekerjaan",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"pekerjaan"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Pekerjaan by Alumni ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{alumni_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/alumni/{{alumni_user_id}}/pekerjaan",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"alumni",
+								"{{alumni_user_id}}",
+								"pekerjaan"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Pekerjaan (Alumni/Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{alumni_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nama_perusahaan\": \"Tech Corp\",\n    \"posisi\": \"Software Engineer\",\n    \"tahun_masuk\": 2023,\n    \"status\": \"aktif\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/pekerjaan",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"pekerjaan"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Pekerjaan (Alumni/Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{alumni_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nama_perusahaan\": \"Tech Corp Updated\",\n    \"posisi\": \"Senior Software Engineer\",\n    \"tahun_masuk\": 2023,\n    \"status\": \"aktif\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/pekerjaan/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"pekerjaan",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Pekerjaan (Alumni/Admin)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{alumni_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/pekerjaan/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"pekerjaan",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080/api/v1",
+			"type": "string"
+		}
+	]
+}
