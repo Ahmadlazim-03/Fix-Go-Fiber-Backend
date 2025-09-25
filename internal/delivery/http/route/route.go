@@ -3,6 +3,7 @@ package route
 import (
 	"Fix-Go-Fiber-Backend/internal/delivery/http/handler"
 	"Fix-Go-Fiber-Backend/internal/delivery/http/middleware"
+	"Fix-Go-Fiber-Backend/pkg/config"
 	"Fix-Go-Fiber-Backend/pkg/jwt"
 
 	"github.com/gofiber/fiber/v2"
@@ -12,14 +13,17 @@ import (
 
 func SetupRoutes(
 	app *fiber.App,
+	cfg *config.Config,
 	authHandler *handler.AuthHandler,
 	mahasiswaHandler *handler.MahasiswaHandler,
+	alumniHandler *handler.AlumniHandler,
+	pekerjaanHandler *handler.PekerjaanAlumniHandler,
 	jwtUtil *jwt.JWTUtil,
 ) {
 	// Global middleware
 	app.Use(recover.New())
 	app.Use(fiberMiddleware.New(middleware.NewLoggerMiddleware()))
-	app.Use(middleware.NewCORSMiddleware())
+	app.Use(middleware.NewCORSMiddleware(cfg))
 
 	// Health check
 	app.Get("/health", func(c *fiber.Ctx) error {
@@ -37,7 +41,6 @@ func SetupRoutes(
 	
 	// Protected routes
 	SetupMahasiswaRoutes(api, mahasiswaHandler, jwtUtil)
-	// TODO: Add when handlers are ready
-	// SetupAlumniRoutes(api, alumniHandler, jwtUtil)
-	// SetupPekerjaanAlumniRoutes(api, pekerjaanHandler, jwtUtil)
+	SetupAlumniRoutes(api, alumniHandler, jwtUtil)
+	SetupPekerjaanAlumniRoutes(api, pekerjaanHandler, jwtUtil)
 }

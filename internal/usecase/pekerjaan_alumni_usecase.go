@@ -8,6 +8,7 @@ import (
 
 	"Fix-Go-Fiber-Backend/internal/domain/entity"
 	"Fix-Go-Fiber-Backend/internal/domain/repository"
+	"Fix-Go-Fiber-Backend/internal/domain/dto"
 )
 
 type PekerjaanAlumniUsecase struct {
@@ -22,6 +23,138 @@ func NewPekerjaanAlumniUsecase(pekerjaanRepo repository.PekerjaanAlumniRepositor
 	}
 }
 
+// Implement service.PekerjaanAlumniService interface
+func (u *PekerjaanAlumniUsecase) CreatePekerjaan(ctx context.Context, req *dto.CreatePekerjaanRequest) (*entity.PekerjaanAlumni, error) {
+	// Check if alumni exists
+	alumni, err := u.alumniRepo.GetByID(ctx, req.AlumniID)
+	if err != nil {
+		return nil, err
+	}
+	if alumni == nil {
+		return nil, errors.New("alumni tidak ditemukan")
+	}
+
+	// Set default status if empty
+	status := entity.StatusAktif
+	if req.Status != "" {
+		status = entity.StatusPekerjaan(req.Status)
+	}
+
+	pekerjaan := &entity.PekerjaanAlumni{
+		AlumniID:       req.AlumniID,
+		NamaCompany:    req.NamaCompany,
+		Posisi:         req.Posisi,
+		TanggalMulai:   req.TanggalMulai,
+		TanggalSelesai: req.TanggalSelesai,
+		Status:         status,
+		Deskripsi:      req.Deskripsi,
+	}
+
+	if err := u.pekerjaanRepo.Create(ctx, pekerjaan); err != nil {
+		return nil, err
+	}
+
+	return pekerjaan, nil
+}
+
+func (u *PekerjaanAlumniUsecase) GetPekerjaanByID(ctx context.Context, id uint) (*entity.PekerjaanAlumni, error) {
+	if id == 0 {
+		return nil, errors.New("ID tidak valid")
+	}
+
+	pekerjaan, err := u.pekerjaanRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if pekerjaan == nil {
+		return nil, errors.New("pekerjaan tidak ditemukan")
+	}
+
+	return pekerjaan, nil
+}
+
+func (u *PekerjaanAlumniUsecase) GetPekerjaanByAlumniID(ctx context.Context, alumniID uint) ([]*entity.PekerjaanAlumni, error) {
+	if alumniID == 0 {
+		return nil, errors.New("alumni ID tidak valid")
+	}
+
+	return u.pekerjaanRepo.GetByAlumniID(ctx, alumniID)
+}
+
+func (u *PekerjaanAlumniUsecase) GetAllPekerjaan(ctx context.Context, search string, limit, offset int) ([]*entity.PekerjaanAlumni, int64, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	if search != "" {
+		return u.pekerjaanRepo.Search(ctx, search, limit, offset)
+	}
+
+	return u.pekerjaanRepo.GetAll(ctx, limit, offset)
+}
+
+func (u *PekerjaanAlumniUsecase) UpdatePekerjaan(ctx context.Context, id uint, req *dto.UpdatePekerjaanRequest) (*entity.PekerjaanAlumni, error) {
+	if id == 0 {
+		return nil, errors.New("ID tidak valid")
+	}
+
+	// Check if pekerjaan exists
+	existing, err := u.pekerjaanRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, errors.New("pekerjaan tidak ditemukan")
+	}
+
+	// Update only non-empty fields
+	if req.NamaCompany != "" {
+		existing.NamaCompany = req.NamaCompany
+	}
+	if req.Posisi != "" {
+		existing.Posisi = req.Posisi
+	}
+	if req.TanggalMulai != nil {
+		existing.TanggalMulai = *req.TanggalMulai
+	}
+	if req.TanggalSelesai != nil {
+		existing.TanggalSelesai = req.TanggalSelesai
+	}
+	if req.Status != "" {
+		existing.Status = entity.StatusPekerjaan(req.Status)
+	}
+	if req.Deskripsi != "" {
+		existing.Deskripsi = req.Deskripsi
+	}
+
+	if err := u.pekerjaanRepo.Update(ctx, id, existing); err != nil {
+		return nil, err
+	}
+
+	return existing, nil
+}
+
+func (u *PekerjaanAlumniUsecase) DeletePekerjaan(ctx context.Context, id uint) error {
+	if id == 0 {
+		return errors.New("ID tidak valid")
+	}
+
+	// Check if pekerjaan exists
+	existing, err := u.pekerjaanRepo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if existing == nil {
+		return errors.New("pekerjaan tidak ditemukan")
+	}
+
+	return u.pekerjaanRepo.Delete(ctx, id) // This will soft delete due to gorm.DeletedAt
+}
+
+// Legacy methods for backward compatibility
 func (u *PekerjaanAlumniUsecase) Create(ctx context.Context, pekerjaan *entity.PekerjaanAlumni) error {
 	// Validate required fields
 	if err := u.validatePekerjaan(pekerjaan); err != nil {

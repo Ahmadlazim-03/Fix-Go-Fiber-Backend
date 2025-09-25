@@ -29,13 +29,13 @@ func main() {
 	appLogger.Info("Starting application...")
 
 	// Connect to database
-	db, err := database.NewPostgresConnection(cfg)
+	db, err := database.NewDatabaseConnection(cfg)
 	if err != nil {
 		appLogger.Fatal("Failed to connect to database:", err)
 	}
 
 	// Run migrations
-	if err := database.RunMigrations(db); err != nil {
+	if err := database.RunMigrations(db, cfg); err != nil {
 		appLogger.Fatal("Failed to run migrations:", err)
 	}
 
@@ -50,13 +50,18 @@ func main() {
 	mahasiswaRepo := postgres.NewMahasiswaRepository(db)
 	alumniRepo := postgres.NewAlumniRepository(db)
 	adminRepo := postgres.NewAdminUserRepository(db)
+	pekerjaanAlumniRepo := postgres.NewPekerjaanAlumniRepository(db)
 
 	// Initialize use cases
 	mahasiswaUsecase := usecase.NewMahasiswaUsecase(mahasiswaRepo, bcryptHelper)
+	alumniUsecase := usecase.NewAlumniUsecase(alumniRepo, mahasiswaRepo)
+	pekerjaanUsecase := usecase.NewPekerjaanAlumniUsecase(pekerjaanAlumniRepo, alumniRepo)
 	authService := usecase.NewAuthService(mahasiswaRepo, alumniRepo, adminRepo, jwtUtil, bcryptUtil)
 
 	// Initialize handlers
 	mahasiswaHandler := handler.NewMahasiswaHandler(mahasiswaUsecase, standardValidator)
+	alumniHandler := handler.NewAlumniHandler(alumniUsecase, standardValidator)
+	pekerjaanHandler := handler.NewPekerjaanAlumniHandler(pekerjaanUsecase, standardValidator)
 	authHandler := handler.NewAuthHandler(authService, customValidator)
 
 	// Initialize Fiber app
@@ -76,7 +81,7 @@ func main() {
 	})
 
 	// Setup routes
-	route.SetupRoutes(app, authHandler, mahasiswaHandler, jwtUtil)
+	route.SetupRoutes(app, cfg, authHandler, mahasiswaHandler, alumniHandler, pekerjaanHandler, jwtUtil)
 
 	// Start server
 	address := ":" + cfg.App.Port

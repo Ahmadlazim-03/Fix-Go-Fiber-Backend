@@ -11,8 +11,8 @@ import (
 )
 
 type JWTUtil struct {
-	secretKey     string
-	expireMinutes int
+	secretKey string
+	expire    time.Duration
 }
 
 type Claims struct {
@@ -24,14 +24,20 @@ type Claims struct {
 }
 
 func NewJWTUtil(cfg *config.Config) *JWTUtil {
+	expire, err := time.ParseDuration(cfg.JWT.Expire)
+	if err != nil {
+		// Default to 24 hours if parsing fails
+		expire = 24 * time.Hour
+	}
+	
 	return &JWTUtil{
-		secretKey:     cfg.JWT.SecretKey,
-		expireMinutes: cfg.JWT.ExpireMinutes,
+		secretKey: cfg.JWT.SecretKey,
+		expire:    expire,
 	}
 }
 
 func (j *JWTUtil) GenerateToken(claims *service.JWTClaims) (string, time.Time, error) {
-	expiresAt := time.Now().Add(time.Duration(j.expireMinutes) * time.Minute)
+	expiresAt := time.Now().Add(j.expire)
 	
 	tokenClaims := &Claims{
 		UserID:   claims.UserID,

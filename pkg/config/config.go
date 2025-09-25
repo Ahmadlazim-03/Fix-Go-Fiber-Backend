@@ -12,7 +12,7 @@ type Config struct {
 	App      AppConfig
 	Database DatabaseConfig
 	JWT      JWTConfig
-	Redis    RedisConfig
+	CORS     CORSConfig
 }
 
 type AppConfig struct {
@@ -24,6 +24,7 @@ type AppConfig struct {
 }
 
 type DatabaseConfig struct {
+	Driver   string
 	Host     string
 	Port     string
 	User     string
@@ -34,15 +35,15 @@ type DatabaseConfig struct {
 }
 
 type JWTConfig struct {
-	SecretKey     string
-	ExpireMinutes int
+	SecretKey string
+	Expire    string
 }
 
-type RedisConfig struct {
-	Host     string
-	Port     string
-	Password string
-	DB       int
+type CORSConfig struct {
+	AllowedOrigins     string
+	AllowedMethods     string
+	AllowedHeaders     string
+	AllowCredentials   bool
 }
 
 func LoadConfig() (*Config, error) {
@@ -61,6 +62,7 @@ func LoadConfig() (*Config, error) {
 			Debug:       getEnvAsBool("APP_DEBUG", true),
 		},
 		Database: DatabaseConfig{
+			Driver:   getEnv("DB_DRIVER", "postgres"),
 			Host:     getEnv("DB_HOST", "localhost"),
 			Port:     getEnv("DB_PORT", "5432"),
 			User:     getEnv("DB_USER", "postgres"),
@@ -70,21 +72,21 @@ func LoadConfig() (*Config, error) {
 			TimeZone: getEnv("DB_TIMEZONE", "Asia/Jakarta"),
 		},
 		JWT: JWTConfig{
-			SecretKey:     getEnv("JWT_SECRET", "your-secret-key"),
-			ExpireMinutes: getEnvAsInt("JWT_EXPIRE_MINUTES", 60),
+			SecretKey: getEnv("JWT_SECRET", "your-secret-key"),
+			Expire:    getEnv("JWT_EXPIRE", "24h"),
 		},
-		Redis: RedisConfig{
-			Host:     getEnv("REDIS_HOST", "localhost"),
-			Port:     getEnv("REDIS_PORT", "6379"),
-			Password: getEnv("REDIS_PASSWORD", ""),
-			DB:       getEnvAsInt("REDIS_DB", 0),
+		CORS: CORSConfig{
+			AllowedOrigins:   getEnv("CORS_ALLOWED_ORIGINS", "*"),
+			AllowedMethods:   getEnv("CORS_ALLOWED_METHODS", "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS"),
+			AllowedHeaders:   getEnv("CORS_ALLOWED_HEADERS", "Origin,Content-Type,Accept,Authorization"),
+			AllowCredentials: getEnvAsBool("CORS_ALLOW_CREDENTIALS", false),
 		},
 	}
 
 	return config, nil
 }
 
-func (c *Config) GetDatabaseDSN() string {
+func (c *Config) GetPostgresDSN() string {
 	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s TimeZone=%s",
 		c.Database.Host,
 		c.Database.Port,
@@ -92,6 +94,17 @@ func (c *Config) GetDatabaseDSN() string {
 		c.Database.Password,
 		c.Database.Name,
 		c.Database.SSLMode,
+		c.Database.TimeZone,
+	)
+}
+
+func (c *Config) GetMySQLDSN() string {
+	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=%s",
+		c.Database.User,
+		c.Database.Password,
+		c.Database.Host,
+		c.Database.Port,
+		c.Database.Name,
 		c.Database.TimeZone,
 	)
 }

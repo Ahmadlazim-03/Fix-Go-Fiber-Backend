@@ -3,7 +3,7 @@ package handler
 import (
 	"strconv"
 
-	"Fix-Go-Fiber-Backend/internal/delivery/http/dto"
+	"Fix-Go-Fiber-Backend/internal/domain/dto"
 	"Fix-Go-Fiber-Backend/internal/domain/entity"
 	"Fix-Go-Fiber-Backend/internal/usecase"
 

@@ -3,7 +3,6 @@ package middleware
 import (
 	"strings"
 
-	"Fix-Go-Fiber-Backend/internal/domain/service"
 	"Fix-Go-Fiber-Backend/pkg/jwt"
 	"Fix-Go-Fiber-Backend/pkg/utils"
 
@@ -51,6 +50,7 @@ func RoleBasedAuth(jwtUtil *jwt.JWTUtil, allowedRoles ...string) fiber.Handler {
 		c.Locals("email", claims.Email)
 		c.Locals("role", claims.Role)
 		c.Locals("username", claims.Username)
+		c.Locals("user", claims) // Store complete claims as "user"
 		c.Locals("claims", claims)
 
 		return c.Next()
@@ -73,8 +73,8 @@ func AlumniOrAdmin(jwtUtil *jwt.JWTUtil) fiber.Handler {
 }
 
 // GetUserFromContext extracts user claims from fiber context
-func GetUserFromContext(c *fiber.Ctx) *service.JWTClaims {
-	claims, ok := c.Locals("claims").(*service.JWTClaims)
+func GetUserFromContext(c *fiber.Ctx) *jwt.Claims {
+	claims, ok := c.Locals("claims").(*jwt.Claims)
 	if !ok {
 		return nil
 	}
